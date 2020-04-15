@@ -419,7 +419,7 @@ def ancestor_deviations():
 
 #========================================
 #======= convert to NEWICK string
-def tree2nwk():
+def tree2nwk(alt_root=None):
     global labs
     nstck=[rootnode,nodes[rootnode,0],nodes[rootnode,2]]
     nwk=[[]]*nnode
@@ -429,6 +429,10 @@ def tree2nwk():
     blens=[prec.format(x) for x in blen] 
     if flags['F']:
         nads=["[&AD={:#5.3f},ADS={:#5.3f}]:".format(x,x) for x in nad]
+        ##----- ADDED LOGIC FOR PHYLO_ROOTING
+        if alt_root is not None:
+            nads[alt_root] = "CANDIDATE"+nads[alt_root]
+        ##----- ADDED LOGIC FOR PHYLO_ROOTING
     elif flags['G']:
         bads=["[&AD={:#5.3f},ADS={:#5.3f}]:".format(x,x) for x in ad]
         nads=["[&AD={:#5.3f},ADS={:#5.3f}]:".format(x,x) for x in nad]
@@ -578,6 +582,24 @@ def mad_output():
         #gdbug(1,nodes,blen,labs)
             #------- make newick string
         rootstr=tree2nwk().replace(at,"@")
+
+
+        ##------- LOGIC ADDED FOR PHYLO_ROOTING
+        sorted_ad = sorted(nad)
+        cutoff_score = sorted_ad[nnode // 10]
+        top_nodes = [1 if x <= cutoff_score else 0 for x in ad]
+        newick_strings = []
+        for x in range(nnode):
+            if top_nodes[x] == 1:
+                #print("Node {} is in the top 10 percent. Creating a newick string with this node labeled".format(x))
+                newick_strings.append(tree2nwk(alt_root=x))  # a newick string with CANDIDATE_NODE placed at the node x
+                #print(newick_strings[-1])
+        #print(";\n".join(newick_strings)+";")
+        with open("top_mad_trees.txt", "w") as fp:
+            fp.write(";\n".join(newick_strings)+";")
+        fp.close()
+        ##-------- END LOGIC FOR PHYLO_ROOTING
+
         s="[MAD={:#5.3f}_AI={:#5.3f}_CCV={:#.3g}%_N={}/{}]".format(mad,ai,ccv[i]*100,r+1,nroots)
         madlog(">> "+s)
         if flags['S']:
