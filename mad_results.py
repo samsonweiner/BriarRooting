@@ -50,7 +50,7 @@ for i in range(len(root_candidates)):
 
     # re-root the tree at the candidate node
     if target_root is not None: # the case at the top AD score.
-        ctree.reroot_at_node(target_root)
+        ctree.reroot_at_edge(target_root.edge)
 
     # we have the re-rooted tree! yay. overwrite the old newick string
     root_candidates[i] = ctree.as_string("newick")
