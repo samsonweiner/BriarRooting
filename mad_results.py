@@ -43,14 +43,15 @@ for i in range(len(root_candidates)):
     nwstr = root_candidates[i]
 
     # create the tree object from dendropy
-    ctree = dendropy.Tree.get_from_string(src=nwstr, schema="newick")
+    ctree = dendropy.Tree.get_from_string(src=nwstr, schema="newick", rooting="force-rooted")
+    ctree.is_rooted=True
 
     # find the target root node
     target_root = ctree.find_node(candidate_filter)
 
     # re-root the tree at the candidate node
     if target_root is not None: # the case at the top AD score.
-        ctree.reroot_at_edge(target_root.edge)
+        ctree.reroot_at_edge(target_root.edge, target_root.edge_length/2, target_root.edge_length/2, update_bipartitions=True)
 
     # we have the re-rooted tree! yay. overwrite the old newick string
     root_candidates[i] = ctree.as_string("newick")
