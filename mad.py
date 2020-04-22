@@ -588,16 +588,21 @@ def mad_output():
         sorted_ad = sorted(nad)
         cutoff_score = sorted_ad[nnode // 10]
         top_nodes = [1 if x <= cutoff_score else 0 for x in ad]
-        newick_strings = []
+        dictionary_lists = []
         for x in range(nnode):
             if top_nodes[x] == 1:
-                #print("Node {} is in the top 10 percent. Creating a newick string with this node labeled".format(x))
-                newick_strings.append(tree2nwk(alt_root=x))  # a newick string with CANDIDATE_NODE placed at the node x
-                #print(newick_strings[-1])
-        #print(";\n".join(newick_strings)+";")
-        with open("top_mad_trees.txt", "w") as fp:
-            fp.write(";\n".join(newick_strings)+";")
-        fp.close()
+                dictionary_lists.append({
+                    "newick": tree2nwk(alt_root=x)+";",  # a newick string with CANDIDATE_NODE placed at the node x
+                    "mad_score": nad[x]  # ad score of candidate node
+                })
+
+        print(dictionary_lists)
+
+        import json
+        json = json.dumps(dictionary_lists)
+        f = open("top_mad_trees.json", "w")
+        f.write(json)
+        f.close()
         ##-------- END LOGIC FOR PHYLO_ROOTING
 
         s="[MAD={:#5.3f}_AI={:#5.3f}_CCV={:#.3g}%_N={}/{}]".format(mad,ai,ccv[i]*100,r+1,nroots)

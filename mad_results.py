@@ -1,6 +1,7 @@
 import dendropy
 import subprocess
 import sys
+import json
 
 # first run mad rooting on the input tree. run with the -f or -g options.
 # subprocess with args: python3 mad.py [input tree] -f, input tree is a path to a file containing a newick string.
@@ -34,13 +35,13 @@ def candidate_filter(n):
     return False
 
 
-with open("top_mad_trees.txt", "r") as fp:
-    root_candidates = fp.read().splitlines()
+with open("top_mad_trees.json", "r") as fp:
+    target_trees = json.load(fp)
 fp.close()
 
-for i in range(len(root_candidates)):
+for current_tree in target_trees:
 
-    nwstr = root_candidates[i]
+    nwstr = current_tree["newick"]
 
     # create the tree object from dendropy
     ctree = dendropy.Tree.get_from_string(src=nwstr, schema="newick", rooting="force-rooted")
@@ -54,9 +55,9 @@ for i in range(len(root_candidates)):
         ctree.reroot_at_edge(target_root.edge, target_root.edge_length/2, target_root.edge_length/2, update_bipartitions=True)
 
     # we have the re-rooted tree! yay. overwrite the old newick string
-    root_candidates[i] = ctree.as_string("newick")
+    current_tree["newick"] = ctree.as_string("newick")
 
 # it's likely these will need a little more manipulation before they go into DTL-Ranger. Will find out more later.
-with open("rerooted_mad_trees.txt", "w") as fp:
-    fp.write(";\n".join(root_candidates) + ";")
+with open("rerooted_mad_trees.json", "w") as fp:
+    json.dump(target_trees, fp)
 fp.close()
