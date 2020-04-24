@@ -3,17 +3,6 @@ import subprocess
 import sys
 import json
 
-# first run mad rooting on the input tree. run with the -f or -g options.
-# subprocess with args: python3 mad.py [input tree] -f, input tree is a path to a file containing a newick string.
-
-# we'll have to do some debugging and writing instructional stuff here. but anyways, here's the code without any error protection.
-args = ["python3", "mad.py", sys.argv[1], "-f"]
-subprocess.call(args)
-
-# this will write two files: the normal mad output to the original location of the tree.rooted
-# also will write another file which contains all of the different trees (newick strings) with "CANDIDATE" at
-# the top 10% of root locations. I didn't include the branch length of the root node in the newick string results.
-
 
 # a filter to find the nodes whose label contains "CANDIDATE", as well as removes the "CANDIDATE" string from them.
 def candidate_filter(n):
@@ -35,29 +24,48 @@ def candidate_filter(n):
     return False
 
 
-with open("top_mad_trees.json", "r") as fp:
-    target_trees = json.load(fp)
-fp.close()
+def mad_results(filename):
+    args = ["python3", "mad.py", filename, "-f"]
+    subprocess.call(args)
 
-for current_tree in target_trees:
+    # this will NOT write normal mad output to the original location of the tree.rooted UNLESS uncomment line 655 of mad.py
+    # Will write another file which contains all of the different trees (newick strings) with "CANDIDATE" at
+    # the top 10% of root locations. I didn't include the branch length of the root node in the newick string results.
+    # writes to "top_mad_trees.json"
 
-    nwstr = current_tree["newick"]
+    with open("top_mad_trees.json", "r") as fp:
+        target_trees = json.load(fp)
+    fp.close()
 
-    # create the tree object from dendropy
-    ctree = dendropy.Tree.get_from_string(src=nwstr, schema="newick", rooting="force-rooted")
-    ctree.is_rooted=True
+    for current_tree in target_trees:
 
-    # find the target root node
-    target_root = ctree.find_node(candidate_filter)
+        nwstr = current_tree["newick"]
 
-    # re-root the tree at the candidate node
-    if target_root is not None: # the case at the top AD score.
-        ctree.reroot_at_edge(target_root.edge, target_root.edge_length/2, target_root.edge_length/2, update_bipartitions=True)
+        # create the tree object from dendropy
+        ctree = dendropy.Tree.get_from_string(src=nwstr, schema="newick", rooting="force-rooted")
+        ctree.is_rooted=True
 
-    # we have the re-rooted tree! yay. overwrite the old newick string
-    current_tree["newick"] = ctree.as_string("newick")
+        # find the target root node
+        target_root = ctree.find_node(candidate_filter)
 
-# it's likely these will need a little more manipulation before they go into DTL-Ranger. Will find out more later.
-with open("rerooted_mad_trees.json", "w") as fp:
-    json.dump(target_trees, fp)
-fp.close()
+        # re-root the tree at the candidate node
+        if target_root is not None: # the case at the top AD score.
+            ctree.reroot_at_edge(
+                target_root.edge,
+                target_root.edge_length/2,
+                target_root.edge_length/2,
+                update_bipartitions=True
+            )
+
+        # THIS IS PROCESSING TO CHANGE LEAF LABELS TO MATCH SPECIES TREE # Should be removed for general case
+        for node in ctree.leaf_node_iter():
+            cname = node.taxon.label
+            numbers = cname[1:]
+            numbers = numbers.split(" ")
+            cname = "H" + numbers[1]+" "+numbers[0]
+            node.taxon.label = cname
+
+        # we have the re-rooted tree! yay. overwrite the old newick string in the dictionary
+        current_tree["newick"] = ctree.as_string("newick")
+
+    return target_trees

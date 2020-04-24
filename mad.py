@@ -652,7 +652,7 @@ begin figtree;
 	set nodeShape.isShown=true;
 """
         rooted+='end;'
-    writeout(rooted)
+    #writeout(rooted) #### CHANGED LOGIC FOR PHYLO_ROOTING
     #gdbug(1,rooted)
     if nroots>1:
         if flags['N']: print("Tied root positions,\n{} rooted trees, but just one written to {}\n".format(nroots,ofn))
