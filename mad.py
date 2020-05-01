@@ -596,11 +596,11 @@ def mad_output():
                     "mad_score": nad[x]  # ad score of candidate node
                 })
 
-        print(dictionary_lists)
+        #print(dictionary_lists)
 
         import json
         json = json.dumps(dictionary_lists)
-        f = open("top_mad_trees.json", "w")
+        f = open("top_mad_trees.json", "w+")
         f.write(json)
         f.close()
         ##-------- END LOGIC FOR PHYLO_ROOTING

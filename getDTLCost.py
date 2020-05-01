@@ -13,6 +13,21 @@ def getDTLCost(specPath, geneTree):
     with open(specPath) as specFile:
         spec_tree_newick = specFile.readline()
     specFile.close()
+
+    #Need to remove brackets in species tree. Can add option for this in final.
+    #while "[" in spec_tree_newick:
+    while "[" in spec_tree_newick:
+        start = spec_tree_newick.index("[")
+        end = spec_tree_newick.index("]")
+        spec_tree_newick = spec_tree_newick[:start] + spec_tree_newick[end+1:]
+    spec_tree_newick = spec_tree_newick[:-1]
+
+    while "E" in spec_tree_newick:
+        index = spec_tree_newick.index("E")
+        spec_tree_newick = spec_tree_newick[:index-1] + spec_tree_newick[index+2:]
+
+
+
     tempTree = open("tempTree.newick", "w+")
     tempTree.write(spec_tree_newick)
     tempTree.write("\n")
@@ -22,6 +37,8 @@ def getDTLCost(specPath, geneTree):
     os.system('Ranger-DTL/a.out -i tempTree.newick > out.txt')
 
     os.system('rm tempTree.newick')
+
+    cost = -1
 
     with open('out.txt') as recFile:
         recLine = recFile.readline()
@@ -37,3 +54,4 @@ def getDTLCost(specPath, geneTree):
     return cost
 
 #print(getDTLCost("speciesTreeTest.txt", "((((((a,b),c),d),b),e),f);"))
+#getDTLCost("../AllSimulatedDatasets/speciesTrees/speciestree1.pruned.tree", "")
